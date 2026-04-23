@@ -4,6 +4,7 @@
 #include <string>
 #include "mmu.h"
 #include "pagetable.h"
+#include <sstream>
 
 // 64 MB (64 * 1024 * 1024)
 #define PHYSICAL_MEMORY 67108864
@@ -43,6 +44,50 @@ int main(int argc, char **argv)
     {
         // Handle command
         // TODO: implement this!
+        std::vector<std::string> args;
+        std::stringstream ss(command);
+        while(ss >> command){
+            args.push_back(command);
+        }
+
+        if(args[0] == "create"){
+            createProcess(std::stoi(args[1]), std::stoi(args[2]), mmu, page_table);
+        }
+
+        else if(args[0] == "allocate"){
+            //allocateVariable(std::stoi(args[1]), args[2], args[3], std::stoi(args[4]), mmu, page_table);
+        }
+
+        else if(args[0] == "set"){
+
+        }
+
+        else if(args[0] == "free"){
+
+        }
+
+        else if(args[0] == "terminate"){
+
+        }
+
+        else if(args[0] == "print"){
+            if(args[1] =="mmu"){
+                mmu->print();
+            }
+            else if(args[1] =="page"){
+                page_table->print();
+            }
+            else if(args[1] =="process"){
+                mmu->printProcesses();
+            }
+            else{
+                
+            }
+        }
+
+        else{
+            std::cout << "error: command not recognized" << std::endl;
+        }
 
         // Get next command
         std::cout << "> ";
@@ -80,15 +125,26 @@ void createProcess(int text_size, int data_size, Mmu *mmu, PageTable *page_table
     //   - create new process in the MMU
     //   - allocate new variables for the <TEXT>, <GLOBALS>, and <STACK>
     //   - print pid
+    uint32_t pid = mmu->createProcess();
+    mmu->addVariableToProcess(pid, "<TEXT>", DataType::Int, text_size, 0);
+    mmu->addVariableToProcess(pid, "<GLOBALS>", DataType::Int, data_size, text_size);
+    mmu->addVariableToProcess(pid, "<STACK>", DataType::Int, 65536, text_size+data_size);
+    page_table->addEntry(pid, 0);
+    for(int i = 1; i*page_table->getPageSize() < text_size+data_size+65536; i = i + 1){
+        page_table->addEntry(pid, i);
+    }
+    std::cout << pid << std::endl;
 }
 
-void allocateVariable(uint32_t pid, std::string var_name, DataType type, uint32_t num_elements, Mmu *mmu, PageTable *page_table)
+void allocateVariable(uint32_t pid, std::string var_name, std::string type, uint32_t num_elements, Mmu *mmu, PageTable *page_table)
 {
     // TODO: implement this!
     //   - find first free space within a page already allocated to this process that is large enough to fit the new variable
     //   - if no hole is large enough, allocate new page(s)
     //   - insert variable into MMU
     //   - print virtual memory address
+
+
 }
 
 void setVariable(uint32_t pid, std::string var_name, uint32_t offset, void *value, Mmu *mmu, PageTable *page_table, uint8_t *memory)

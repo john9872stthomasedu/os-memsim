@@ -33,6 +33,20 @@ void PageTable::addEntry(uint32_t pid, int page_number)
     int frame = 0; 
     // Find free frame
     // TODO: implement this!
+    std::vector<std::string> keys = sortedKeys();
+    frame = keys.size();
+    for(int i = 0; i < keys.size(); i++){
+        bool found = false;
+        for(int j = 0; j < keys.size(); j++){
+            if(_table[keys[j]] == i){
+                found = true;
+            }
+        }
+        if(!found){
+            frame = i;
+            break;
+        }
+    }
     _table[entry] = frame;
 }
 
@@ -56,6 +70,10 @@ int PageTable::getPhysicalAddress(uint32_t pid, uint32_t virtual_address)
     return address;
 }
 
+int PageTable::getPageSize(){
+    return _page_size;
+}
+
 void PageTable::print()
 {
     int i;
@@ -68,5 +86,6 @@ void PageTable::print()
     for (i = 0; i < keys.size(); i++)
     {
         // TODO: print all pages
+        printf(" %d | 11%d | 12%d \n", keys[i].substr(0, 4), keys[i].substr(keys[i].find("|")+1), _table[keys[i]]);
     }
 }

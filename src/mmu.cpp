@@ -62,6 +62,15 @@ void Mmu::print()
         for (j = 0; j < _processes[i]->variables.size(); j++)
         {
             // TODO: print all variables (excluding those of type DataType::FreeSpace)
+            if(_processes[i]->variables[j]->type != DataType::FreeSpace){
+                printf(" %d | 13%s | 12%p | 10%d ", _processes[i]->pid, _processes[i]->variables[j]->name, "0x" + _processes[i]->variables[j]->virtual_address, _processes[i]->variables[j]->size);
+            }
         }
+    }
+}
+
+void Mmu::printProcesses(){
+    for(int i = 0; i < _processes.size(); i++){
+        std::cout << _processes[i]->pid << std::endl;
     }
 }
