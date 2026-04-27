@@ -265,46 +265,45 @@ for (auto v : proc->variables)
         return;
     }
 
-   uint32_t max_addr = 0;
+   uint32_t addr = 0;
 
+// always start AFTER reserved regions
 for (auto v : proc->variables)
 {
-    if (v->type == DataType::FreeSpace && v->size >= total_size)
+    if (v->name == "<TEXT>" ||
+        v->name == "<GLOBALS>" ||
+        v->name == "<STACK>")
     {
-        max_addr = v->virtual_address;
-
-        // shrink free space 
-        v->virtual_address += total_size;
-        v->size -= total_size;
-
-        break;
+        uint32_t end = v->virtual_address + v->size;
+        if (end > addr)
+            addr = end;
     }
 }
 
-// if no hole found, extend at end of free space
-if (max_addr == 0)
+// now place after heap start
+for (auto v : proc->variables)
 {
-    for (auto v : proc->variables)
+    if (v->name != "<TEXT>" &&
+        v->name != "<GLOBALS>" &&
+        v->name != "<STACK>" &&
+        v->name != "<FREE_SPACE>")
     {
-        if (v->type != DataType::FreeSpace)
-        {
-            uint32_t end = v->virtual_address + v->size;
-            if (end > max_addr)
-                max_addr = end;
-        }
+        uint32_t end = v->virtual_address + v->size;
+        if (end > addr)
+            addr = end;
     }
 }
 
-    mmu->addVariableToProcess(pid, var_name, type, total_size, max_addr);
+    mmu->addVariableToProcess(pid, var_name, type, total_size, addr);
 
-    uint32_t start_page = max_addr / page_table->getPageSize();
-    uint32_t end_page = (max_addr + total_size) / page_table->getPageSize();
+    uint32_t start_page = addr / page_table->getPageSize();
+    uint32_t end_page = (addr + total_size) / page_table->getPageSize();
 
     for(uint32_t p = start_page; p <= end_page; p++){
         page_table->addEntry(pid, p);
     }
 
-    std::cout << max_addr << std::endl;
+    std::cout << addr << std::endl;
 
 
 }
