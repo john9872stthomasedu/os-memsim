@@ -148,22 +148,49 @@ int main(int argc, char **argv)
                         continue;
                     }
 
-                    uint32_t count = var->size / 4; // assume int-like (good enough)
+                    if (var->type == DataType::Char)
+                    {
+                        uint32_t count = var->size;
 
-                    uint32_t limit = std::min(count, (uint32_t)4);
+                        uint32_t limit = std::min(count, (uint32_t)16);
 
-                    for (uint32_t i = 0; i < limit; i++) {
-                        int phys = page_table->getPhysicalAddress(pid, var->virtual_address + i * 4);
-                        int value;
-                        memcpy(&value, &memory[phys], sizeof(int));
+                        for (uint32_t i = 0; i < limit; i++) {
+                            int phys = page_table->getPhysicalAddress(pid, var->virtual_address + i);
+                            char value;
+                            memcpy(&value, &memory[phys], sizeof(char));
 
-                        std::cout << value;
-                        if (i < limit - 1) std::cout << ", ";
+                            std::cout << value;
+                            if (i < limit - 1) std::cout << " ";
+                        }
+
+                        if (count > limit) {
+                            std::cout << " ... [" << count << " chars]";
+                        }
+
+                        std::cout << std::endl;
+                    }
+                    else
+                    {
+                        uint32_t count = var->size / 4;
+
+                        uint32_t limit = std::min(count, (uint32_t)4);
+
+                        for (uint32_t i = 0; i < limit; i++) {
+                            int phys = page_table->getPhysicalAddress(pid, var->virtual_address + i * 4);
+                            int value;
+                            memcpy(&value, &memory[phys], sizeof(int));
+
+                            std::cout << value;
+                            if (i < limit - 1) std::cout << ", ";
+                        }
+
+                        if (count > 4) {
+                            std::cout << ", ... [" << count << " items]";
+                        }
+
+                        std::cout << std::endl;
                     }
 
-                    if (count > 4) {
-                        std::cout << ", ... [" << count << " items]";
-                    }
 
                     std::cout << std::endl;
                 }   
