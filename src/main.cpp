@@ -81,6 +81,17 @@ int main(int argc, char **argv)
             continue;
         }
 
+        uint32_t elemSize;
+
+        switch(varInfo->type){
+            case DataType::Char: elemSize = 1; break;
+            case DataType::Short: elemSize = 2; break;
+            case DataType::Int:
+            case DataType::Float: elemSize = 4; break;
+            case DataType::Long:
+            case DataType::Double: elemSize = 8; break;
+        }
+
         
         if (varInfo->type == DataType::Char)
         {
@@ -88,7 +99,7 @@ int main(int argc, char **argv)
             for (int i = 4; i < args.size(); i++)
             {
                 char value = args[i][0];  // take first char
-                setVariable(pid, var, offset + (i - 4),
+                setVariable(pid, var, offset + (i - 4)*elemSize,
                             &value, mmu, page_table, memory);
             }
         }
@@ -97,7 +108,7 @@ int main(int argc, char **argv)
             for (int i = 4; i < args.size(); i++)
             {
                 short value = (short)std::stoi(args[i]);
-                setVariable(pid, var, offset + (i - 4),
+                setVariable(pid, var, offset + (i - 4)*elemSize,
                             &value, mmu, page_table, memory);
             }
         }
@@ -106,7 +117,7 @@ int main(int argc, char **argv)
             for (int i = 4; i < args.size(); i++)
             {
                 int value = std::stoi(args[i]);
-                setVariable(pid, var, offset + (i - 4),
+                setVariable(pid, var, offset + (i - 4)*elemSize,
                             &value, mmu, page_table, memory);
             }
         }
@@ -115,7 +126,7 @@ int main(int argc, char **argv)
             for (int i = 4; i < args.size(); i++)
             {
                 float value = std::stof(args[i]);
-                setVariable(pid, var, offset + (i - 4),
+                setVariable(pid, var, offset + (i - 4)*elemSize,
                             &value, mmu, page_table, memory);
             }
         }
@@ -124,7 +135,7 @@ int main(int argc, char **argv)
             for (int i = 4; i < args.size(); i++)
             {
                 long value = std::stol(args[i]);
-                setVariable(pid, var, offset + (i - 4),
+                setVariable(pid, var, offset + (i - 4)*elemSize,
                             &value, mmu, page_table, memory);
             }
         }
@@ -133,7 +144,7 @@ int main(int argc, char **argv)
             for (int i = 4; i < args.size(); i++)
             {
                 double value = std::stod(args[i]);
-                setVariable(pid, var, offset + (i - 4),
+                setVariable(pid, var, offset + (i - 4)*elemSize,
                             &value, mmu, page_table, memory);
             }
         }
