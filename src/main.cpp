@@ -77,19 +77,10 @@ int main(int argc, char **argv)
         Variable* varInfo = mmu->getVariable(pid, var);
 
         if (!varInfo) {
-            std::cout << "error: variable not found" << std::endl;
+            std::cout << "error: variable not found"<< std::endl;
+            std::cout << "> ";
+            std::getline(std::cin, command);
             continue;
-        }
-
-        uint32_t elemSize;
-
-        switch(varInfo->type){
-            case DataType::Char: elemSize = 1; break;
-            case DataType::Short: elemSize = 2; break;
-            case DataType::Int:
-            case DataType::Float: elemSize = 4; break;
-            case DataType::Long:
-            case DataType::Double: elemSize = 8; break;
         }
 
         
@@ -99,7 +90,7 @@ int main(int argc, char **argv)
             for (int i = 4; i < args.size(); i++)
             {
                 char value = args[i][0];  // take first char
-                setVariable(pid, var, offset + (i - 4)*elemSize,
+                setVariable(pid, var, offset + (i - 4),
                             &value, mmu, page_table, memory);
             }
         }
@@ -108,7 +99,7 @@ int main(int argc, char **argv)
             for (int i = 4; i < args.size(); i++)
             {
                 short value = (short)std::stoi(args[i]);
-                setVariable(pid, var, offset + (i - 4)*elemSize,
+                setVariable(pid, var, offset + (i - 4),
                             &value, mmu, page_table, memory);
             }
         }
@@ -117,7 +108,7 @@ int main(int argc, char **argv)
             for (int i = 4; i < args.size(); i++)
             {
                 int value = std::stoi(args[i]);
-                setVariable(pid, var, offset + (i - 4)*elemSize,
+                setVariable(pid, var, offset + (i - 4),
                             &value, mmu, page_table, memory);
             }
         }
@@ -126,7 +117,7 @@ int main(int argc, char **argv)
             for (int i = 4; i < args.size(); i++)
             {
                 float value = std::stof(args[i]);
-                setVariable(pid, var, offset + (i - 4)*elemSize,
+                setVariable(pid, var, offset + (i - 4),
                             &value, mmu, page_table, memory);
             }
         }
@@ -135,7 +126,7 @@ int main(int argc, char **argv)
             for (int i = 4; i < args.size(); i++)
             {
                 long value = std::stol(args[i]);
-                setVariable(pid, var, offset + (i - 4)*elemSize,
+                setVariable(pid, var, offset + (i - 4),
                             &value, mmu, page_table, memory);
             }
         }
@@ -144,7 +135,7 @@ int main(int argc, char **argv)
             for (int i = 4; i < args.size(); i++)
             {
                 double value = std::stod(args[i]);
-                setVariable(pid, var, offset + (i - 4)*elemSize,
+                setVariable(pid, var, offset + (i - 4),
                             &value, mmu, page_table, memory);
             }
         }
@@ -503,7 +494,7 @@ void setVariable(uint32_t pid, std::string var_name, uint32_t offset, void *valu
         case DataType::Double: size = 8; break;
         default: size = 4;
     }
-
+    
     memcpy(&memory[phys], value, size);
 }
 
