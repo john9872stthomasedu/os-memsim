@@ -70,16 +70,45 @@ int main(int argc, char **argv)
         }
 
         else if(args[0] == "set"){
-            uint32_t pid = std::stoi(args[1]);
-            std::string var = args[2];
-            uint32_t offset = std::stoi(args[3]);
+        uint32_t pid = std::stoi(args[1]);
+        std::string var = args[2];
+        uint32_t offset = std::stoi(args[3]);
 
-            for(int i = 4; i < args.size(); i++){
-                int value = std::stoi(args[i]);
+        Variable* varInfo = mmu->getVariable(pid, var);
+
+        if (!varInfo) {
+            std::cout << "error: variable not found" << std::endl;
+            continue;
+        }
+
+        
+        if (varInfo->type == DataType::Char)
+        {
+            // handle characters
+            for (int i = 4; i < args.size(); i++)
+            {
+                char value = args[i][0];  // take first char
                 setVariable(pid, var, offset + (i - 4),
                             &value, mmu, page_table, memory);
             }
         }
+        else
+        {
+            // handle numeric types
+            for (int i = 4; i < args.size(); i++)
+            {
+                try {
+                    int value = std::stoi(args[i]);
+                    setVariable(pid, var, offset + (i - 4),
+                                &value, mmu, page_table, memory);
+                }
+                catch (...) {
+                    std::cout << "error: invalid integer input" << std::endl;
+                    break;
+                }
+            }
+        }
+    }
 
         else if(args[0] == "free"){
             freeVariable(std::stoi(args[1]), args[2], mmu, page_table);
