@@ -358,20 +358,7 @@ void allocateVariable(uint32_t pid, std::string var_name, DataType type, uint32_
 
 
     Process* proc = mmu->getProcess(pid);
-        //testing
-    std::cout << "DEBUG FREE LIST:\n";
-for (auto v : proc->variables)
-{
-    std::cout
-        << v->name
-        << " type=" << (int)v->type
-        << " addr=" << v->virtual_address
-        << " size=" << v->size
-        << "\n";
-}
 
-
-    //end of testing
     if (!proc) {
         std::cout << "error: process not found" << std::endl;
         return;
