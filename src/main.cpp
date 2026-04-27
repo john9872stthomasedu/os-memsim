@@ -92,20 +92,49 @@ int main(int argc, char **argv)
                             &value, mmu, page_table, memory);
             }
         }
-        else
+        else if (varInfo->type == DataType::Short)
         {
-            // handle numeric types
             for (int i = 4; i < args.size(); i++)
             {
-                try {
-                    int value = std::stoi(args[i]);
-                    setVariable(pid, var, offset + (i - 4),
-                                &value, mmu, page_table, memory);
-                }
-                catch (...) {
-                    std::cout << "error: invalid integer input" << std::endl;
-                    break;
-                }
+                short value = (short)std::stoi(args[i]);
+                setVariable(pid, var, offset + (i - 4),
+                            &value, mmu, page_table, memory);
+            }
+        }
+        else if (varInfo->type == DataType::Int)
+        {
+            for (int i = 4; i < args.size(); i++)
+            {
+                int value = std::stoi(args[i]);
+                setVariable(pid, var, offset + (i - 4),
+                            &value, mmu, page_table, memory);
+            }
+        }
+        else if (varInfo->type == DataType::Float)
+        {
+            for (int i = 4; i < args.size(); i++)
+            {
+                float value = std::stof(args[i]);
+                setVariable(pid, var, offset + (i - 4),
+                            &value, mmu, page_table, memory);
+            }
+        }
+        else if (varInfo->type == DataType::Long)
+        {
+            for (int i = 4; i < args.size(); i++)
+            {
+                long value = std::stol(args[i]);
+                setVariable(pid, var, offset + (i - 4),
+                            &value, mmu, page_table, memory);
+            }
+        }
+        else if (varInfo->type == DataType::Double)
+        {
+            for (int i = 4; i < args.size(); i++)
+            {
+                double value = std::stod(args[i]);
+                setVariable(pid, var, offset + (i - 4),
+                            &value, mmu, page_table, memory);
             }
         }
     }
@@ -169,10 +198,28 @@ int main(int argc, char **argv)
 
                         std::cout << std::endl;
                     }
-                    else
+                    else if (var->type == DataType::Short)
+                    {
+                        uint32_t count = var->size / 2;
+                        uint32_t limit = std::min(count, (uint32_t)4);
+
+                        for (uint32_t i = 0; i < limit; i++) {
+                            int phys = page_table->getPhysicalAddress(pid, var->virtual_address + i * 2);
+                            short value;
+                            memcpy(&value, &memory[phys], sizeof(short));
+
+                            std::cout << value;
+                            if (i < limit - 1) std::cout << ", ";
+                        }
+
+                        if (count > 4)
+                            std::cout << ", ... [" << count << " items]";
+
+                        std::cout << std::endl;
+                    }
+                    else if (var->type == DataType::Int)
                     {
                         uint32_t count = var->size / 4;
-
                         uint32_t limit = std::min(count, (uint32_t)4);
 
                         for (uint32_t i = 0; i < limit; i++) {
@@ -184,15 +231,68 @@ int main(int argc, char **argv)
                             if (i < limit - 1) std::cout << ", ";
                         }
 
-                        if (count > 4) {
+                        if (count > 4)
                             std::cout << ", ... [" << count << " items]";
-                        }
 
                         std::cout << std::endl;
                     }
+                    else if (var->type == DataType::Float)
+                    {
+                        uint32_t count = var->size / 4;
+                        uint32_t limit = std::min(count, (uint32_t)4);
 
+                        for (uint32_t i = 0; i < limit; i++) {
+                            int phys = page_table->getPhysicalAddress(pid, var->virtual_address + i * 4);
+                            float value;
+                            memcpy(&value, &memory[phys], sizeof(float));
 
-                    std::cout << std::endl;
+                            std::cout << value;
+                            if (i < limit - 1) std::cout << ", ";
+                        }
+
+                        if (count > 4)
+                            std::cout << ", ... [" << count << " items]";
+
+                        std::cout << std::endl;
+                    }
+                    else if (var->type == DataType::Long)
+                    {
+                        uint32_t count = var->size / 8;
+                        uint32_t limit = std::min(count, (uint32_t)4);
+
+                        for (uint32_t i = 0; i < limit; i++) {
+                            int phys = page_table->getPhysicalAddress(pid, var->virtual_address + i * 8);
+                            long value;
+                            memcpy(&value, &memory[phys], sizeof(long));
+
+                            std::cout << value;
+                            if (i < limit - 1) std::cout << ", ";
+                        }
+
+                        if (count > 4)
+                            std::cout << ", ... [" << count << " items]";
+
+                        std::cout << std::endl;
+                    }
+                    else if (var->type == DataType::Double)
+                    {
+                        uint32_t count = var->size / 8;
+                        uint32_t limit = std::min(count, (uint32_t)4);
+
+                        for (uint32_t i = 0; i < limit; i++) {
+                            int phys = page_table->getPhysicalAddress(pid, var->virtual_address + i * 8);
+                            double value;
+                            memcpy(&value, &memory[phys], sizeof(double));
+
+                            std::cout << value;
+                            if (i < limit - 1) std::cout << ", ";
+                        }
+
+                        if (count > 4)
+                            std::cout << ", ... [" << count << " items]";
+
+                        std::cout << std::endl;
+                    }
                 }   
             }
         }
