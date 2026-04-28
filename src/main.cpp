@@ -78,6 +78,8 @@ int main(int argc, char **argv)
 
         if (!varInfo) {
             std::cout << "error: variable not found" << std::endl;
+            std::cout << "> ";
+            std::getline(std::cin, command);
             continue;
         }
 
@@ -485,8 +487,19 @@ void setVariable(uint32_t pid, std::string var_name, uint32_t offset, void *valu
         std::cout << "error: index out of range" << std::endl;
         return;
     }
+    uint32_t elemSize;
 
-    uint32_t vaddr = var->virtual_address + offset;
+    switch(var->type){
+        case DataType::Char: elemSize = 1; break;
+        case DataType::Short: elemSize = 2; break;
+        case DataType::Int:
+        case DataType::Float: elemSize = 4; break;
+        case DataType::Long:
+        case DataType::Double: elemSize = 8; break;
+    }
+
+
+    uint32_t vaddr = var->virtual_address + offset*elemSize;
 
     int phys = page_table->getPhysicalAddress(pid, vaddr);
 
