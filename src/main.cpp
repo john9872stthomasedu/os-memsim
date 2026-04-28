@@ -525,18 +525,56 @@ void freeVariable(uint32_t pid, std::string var_name, Mmu *mmu, PageTable *page_
     // TODO: implement this!
     //   - remove entry from MMU
     //   - free page if this variable was the only one on a given page
-    if (!mmu->getProcess(pid)) {
+    Process* proc = mmu->getProcess(pid);
+    if (!proc) {
         std::cout << "error: process not found" << std::endl;
         return;
     }
 
-    if (!mmu->getVariable(pid, var_name)) {
+    Variable* var = mmu->getVariable(pid, var_name);
+    if (!var) {
         std::cout << "error: variable not found" << std::endl;
         return;
     }
 
+    uint32_t pageSize = page_table->getPageSize();
+
+    uint32_t startPage = var->virtual_address / pageSize;
+    uint32_t endPage = (var->virtual_address + var->size - 1) / pageSize;
+
+    // remove variable first
     mmu->removeVariable(pid, var_name);
-    page_table->removeEntriesForProcess(pid);
+
+    proc = mmu->getProcess(pid);
+    if (!proc) return;
+
+    for (uint32_t pg = startPage; pg <= endPage; pg++)
+    {
+        bool used = false;
+
+        for (auto v : proc->variables)
+        {
+            if (v->name == "<TEXT>" ||
+                v->name == "<GLOBALS>" ||
+                v->name == "<STACK>"||
+                v->type == DataType::FreeSpace)
+                continue;
+
+            uint32_t vStart = v->virtual_address / pageSize;
+            uint32_t vEnd = (v->virtual_address + v->size - 1) / pageSize;
+
+            if (pg >= vStart && pg <= vEnd)
+            {
+                used = true;
+                break;
+            }
+        }
+
+        if (!used)
+        {
+            page_table->removeEntry(pid, pg);
+        }
+    }
 }
 
 void terminateProcess(uint32_t pid, Mmu *mmu, PageTable *page_table)

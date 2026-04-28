@@ -109,3 +109,19 @@ void PageTable::removeEntriesForProcess(uint32_t pid)
         }
     }
 }
+
+void PageTable::removeEntry(uint32_t pid, uint32_t page_number)
+{
+    //testing
+    std::cout << "trying remove: " 
+          << std::to_string(pid) + "|" + std::to_string(page_number)
+          << std::endl;
+    //end of testing
+    std::string key = std::to_string(pid) + "|" + std::to_string(page_number);
+
+    auto it = _table.find(key);
+    if (it != _table.end())
+    {
+        _table.erase(it);
+    }
+}

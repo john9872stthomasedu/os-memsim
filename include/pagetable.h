@@ -38,6 +38,7 @@ public:
     void print();
     int getPageSize();
     void removeEntriesForProcess(uint32_t pid);
+    void removeEntry(uint32_t pid, uint32_t page_number);
 };
 
 #endif // __PAGETABLE_H_
