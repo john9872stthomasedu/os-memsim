@@ -27,26 +27,38 @@ std::vector<std::string> PageTable::sortedKeys()
 
 void PageTable::addEntry(uint32_t pid, int page_number)
 {
+    // TODO: implement this!
     // Combination of pid and page number act as the key to look up frame number
     std::string entry = std::to_string(pid) + "|" + std::to_string(page_number);
 
-    int frame = 0; 
-    // Find free frame
-    // TODO: implement this!
-    std::vector<std::string> keys = sortedKeys();
-    frame = keys.size();
-    for(int i = 0; i < keys.size(); i++){
+    // don't duplicate entries
+    if (_table.count(entry)) return;
+
+    // collect used frames
+    std::vector<int> used;
+    for (auto &p : _table)
+    {
+        used.push_back(p.second);
+    }
+
+    // find smallest free frame
+    int frame = 0;
+    while (true)
+    {
         bool found = false;
-        for(int j = 0; j < keys.size(); j++){
-            if(_table[keys[j]] == i){
+        for (int f : used)
+        {
+            if (f == frame)
+            {
                 found = true;
+                break;
             }
         }
-        if(!found){
-            frame = i;
-            break;
-        }
+
+        if (!found) break;
+        frame++;
     }
+
     _table[entry] = frame;
 }
 
@@ -112,11 +124,6 @@ void PageTable::removeEntriesForProcess(uint32_t pid)
 
 void PageTable::removeEntry(uint32_t pid, uint32_t page_number)
 {
-    //testing
-    std::cout << "trying remove: " 
-          << std::to_string(pid) + "|" + std::to_string(page_number)
-          << std::endl;
-    //end of testing
     std::string key = std::to_string(pid) + "|" + std::to_string(page_number);
 
     auto it = _table.find(key);

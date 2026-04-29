@@ -5,6 +5,7 @@
 #include "mmu.h"
 #include "pagetable.h"
 #include <sstream>
+#include <algorithm>
 
 // 64 MB (64 * 1024 * 1024)
 #define PHYSICAL_MEMORY 67108864
@@ -394,75 +395,81 @@ void allocateVariable(uint32_t pid, std::string var_name, DataType type, uint32_
     }
 
     uint32_t total_size = type_size * num_elements;
-    uint32_t base = 0;
+
+    //collect variables
+    std::vector<Variable*> vars;
 
     for (auto v : proc->variables)
+    {
+        if (v->type != DataType::FreeSpace)
+            vars.push_back(v);
+    }
+
+    //sort by address
+    std::sort(vars.begin(), vars.end(),
+        [](Variable* a, Variable* b){
+            return a->virtual_address < b->virtual_address;
+        });
+
+    //find heap start
+    uint32_t heap_start = 0;
+
+    for (auto v : vars)
     {
         if (v->name == "<TEXT>" ||
             v->name == "<GLOBALS>" ||
             v->name == "<STACK>")
-            continue;
-    
+        {
             uint32_t end = v->virtual_address + v->size;
-            if (end > base)
-                base = end;
-        
+            if (end > heap_start)
+                heap_start = end;
+        }
     }
 
-    uint32_t total_used = 0;
+    //first fit
+    uint32_t addr = heap_start;
+    bool placed = false;
 
-    for (auto v : proc->variables) {
-        if (v->type != DataType::FreeSpace)
-            total_used += v->size;
-    }
-
-    if (total_used + total_size > PHYSICAL_MEMORY) {
-        std::cout << "error: allocation exceeds system memory" << std::endl;
-        return;
-    }
-
-   uint32_t addr = 0;
-
-// always start AFTER reserved regions
-for (auto v : proc->variables)
-{
-    if (v->name == "<TEXT>" ||
-        v->name == "<GLOBALS>" ||
-        v->name == "<STACK>")
+    for (int i = 0; i < vars.size(); i++)
     {
+        Variable* v = vars[i];
+
+        // skip reserved regions
+        if (v->name == "<TEXT>" ||
+            v->name == "<GLOBALS>" ||
+            v->name == "<STACK>")
+            continue;
+
+        uint32_t gap = v->virtual_address - addr;
+
+        if (gap >= total_size)
+        {
+            placed = true;
+            break;
+        }
+
         uint32_t end = v->virtual_address + v->size;
         if (end > addr)
             addr = end;
     }
-}
 
-// now place after heap start
-for (auto v : proc->variables)
-{
-    if (v->name != "<TEXT>" &&
-        v->name != "<GLOBALS>" &&
-        v->name != "<STACK>" &&
-        v->name != "<FREE_SPACE>")
-    {
-        uint32_t end = v->virtual_address + v->size;
-        if (end > addr)
-            addr = end;
-    }
-}
-
+    //add it
     mmu->addVariableToProcess(pid, var_name, type, total_size, addr);
 
-    uint32_t start_page = addr / page_table->getPageSize();
-    uint32_t end_page = (addr + total_size) / page_table->getPageSize();
+    //make sure page exists
+    uint32_t pageSize = page_table->getPageSize();
 
-    for(uint32_t p = start_page; p <= end_page; p++){
+    uint32_t start_page = addr / pageSize;
+    uint32_t end_page = (addr + total_size - 1) / pageSize;
+
+    for(uint32_t p = start_page; p <= end_page; p++)
+    {
         page_table->addEntry(pid, p);
     }
 
     std::cout << addr << std::endl;
-
-
 }
+
 
 void setVariable(uint32_t pid, std::string var_name, uint32_t offset, void *value, Mmu *mmu, PageTable *page_table, uint8_t *memory)
 {
@@ -542,22 +549,22 @@ void freeVariable(uint32_t pid, std::string var_name, Mmu *mmu, PageTable *page_
     uint32_t startPage = var->virtual_address / pageSize;
     uint32_t endPage = (var->virtual_address + var->size - 1) / pageSize;
 
-    // remove variable first
+    // remove variable from MMU
     mmu->removeVariable(pid, var_name);
 
-    proc = mmu->getProcess(pid);
-    if (!proc) return;
+    proc = mmu->getProcess(pid); // refresh
 
+    // check each page
     for (uint32_t pg = startPage; pg <= endPage; pg++)
     {
         bool used = false;
 
         for (auto v : proc->variables)
         {
-            if (v->name == "<TEXT>" ||
+            if (v->type == DataType::FreeSpace ||
+                v->name == "<TEXT>" ||
                 v->name == "<GLOBALS>" ||
-                v->name == "<STACK>"||
-                v->type == DataType::FreeSpace)
+                v->name == "<STACK>")
                 continue;
 
             uint32_t vStart = v->virtual_address / pageSize;
